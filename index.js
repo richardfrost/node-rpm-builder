@@ -6,7 +6,6 @@ var fsx = require('fs-extra');
 var globby = require('globby');
 var path = require('path');
 var shortid = require('shortid');
-var _ = require('lodash');
 
 var writeSpec = require('./lib/spec');
 
@@ -29,21 +28,8 @@ function setupTempDir(tmpDir) {
 
   // Create RPM folder structure
   logger(chalk.cyan('Creating RPM directory structure at:'), tmpDir);
-  _.forEach(rpmStructure, function(dirName) {
+  rpmStructure.forEach(dirName => {
     fsx.mkdirpSync(path.join(tmpDir, dirName));
-  });
-}
-
-/**
- * Expand the patterns/files (specified by the user)
- * that should be ignored when building the RPM package.
- *
- * @param  {Array} excludeFiles patterns/files to ignore
- * @return {Array}              expanded list of files to ignore
- */
-function retrieveFilesToExclude(excludeFiles) {
-  return globby.sync(excludeFiles).map(function(file) {
-    return path.normalize(file);
   });
 }
 
@@ -66,29 +52,19 @@ function checkDirective(directive) {
  */
 function prepareFiles(files, excludeFiles, buildRoot) {
   var _files = [];
-  var filesToExclude = retrieveFilesToExclude(excludeFiles);
 
-  _.forEach(files, function(file) {
+  files.forEach(file => {
     if (!file.hasOwnProperty('src') || !file.hasOwnProperty('dest')) {
       throw new Error('All files/folders must have source (src) and destination (dest) set');
     }
 
     file.cwd = (file.cwd || '.') + '/';
-
-    var actualSrc = globby.sync(path.join(file.cwd, file.src));
-
+    var actualSrc = globby.sync(path.join(file.cwd, file.src), {ignore: excludeFiles});
     fsx.ensureDir(path.join(buildRoot, file.dest));
 
-    _.forEach(actualSrc, function(srcFile) {
-      // Check whether to ignore this file
-      if (filesToExclude.indexOf(srcFile) > -1) {
-        return;
-      }
-
-      // files/folders should be copied
-      // taking into account the cwd
-      // so the destination should be
-      // relative to the cwd
+    actualSrc.forEach(srcFile => {
+      // files/folders should be copied taking into account the cwd
+      // so the destination should be relative to the cwd
       var copyTarget = path.normalize(srcFile).replace(path.normalize(file.cwd), '');
       var dest = path.join(file.dest, copyTarget);
 
@@ -181,7 +157,7 @@ function rpm(options, cb) {
     execOpts: {}
   };
 
-  options = _.defaults(options, defaults);
+  options = Object.assign(defaults, options);
 
   logger = options.verbose ? require('./lib/logger') : function() {
     return;
