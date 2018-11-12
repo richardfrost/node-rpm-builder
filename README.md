@@ -267,6 +267,11 @@ Note that virtual packages may not have version numbers.
 
 An array of packages that this package conflicts with (e.g. `["cobol", "sparta > 300"]`).
 
+### obsoletes
+`Array`
+
+An array of packages that this package obsoletes (e.g. `["cobol"]`).
+
 #### excludeArchs
 `Array`
 
