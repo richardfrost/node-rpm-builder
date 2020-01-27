@@ -59,7 +59,13 @@ function prepareFiles(files, excludeFiles, buildRoot) {
     }
 
     file.cwd = (file.cwd || '.') + '/';
-    var actualSrc = globby.sync(path.join(file.cwd, file.src), {ignore: excludeFiles});
+    var actualSrc;
+    // TODO: cwd is not used if src is an array
+    if (Array.isArray(file.src)) {
+      actualSrc = globby.sync(file.src, {ignore: excludeFiles});
+    } else {
+      actualSrc = globby.sync(path.join(file.cwd, file.src), {ignore: excludeFiles});
+    }
     fsx.ensureDir(path.join(buildRoot, file.dest));
 
     actualSrc.forEach(srcFile => {
