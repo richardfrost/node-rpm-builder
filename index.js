@@ -59,13 +59,13 @@ function prepareFiles(files, excludeFiles, buildRoot) {
     }
 
     file.cwd = (file.cwd || '.') + '/';
-    var actualSrc;
-    // TODO: cwd is not used if src is an array
-    if (Array.isArray(file.src)) {
-      actualSrc = globby.sync(file.src, {ignore: excludeFiles});
-    } else {
-      actualSrc = globby.sync(path.join(file.cwd, file.src), {ignore: excludeFiles});
-    }
+
+    // File-level ignore list must be an array
+    file.ignore = file.ignore || [];
+    if (file.cwd != './') { file.ignore.forEach((item, index) => { file.ignore[index] = path.join(file.cwd, item); }); }
+
+    var actualSrc = globby.sync(path.join(file.cwd, file.src), {ignore: excludeFiles.concat(file.ignore)});
+
     fsx.ensureDir(path.join(buildRoot, file.dest));
 
     actualSrc.forEach(srcFile => {
